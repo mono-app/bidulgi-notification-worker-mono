@@ -1,5 +1,5 @@
 {
-  "name": "mono-bidulgi-work-manager",
+  "name": "mono-bidulgi-notification-worker-mono",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -15,7 +15,7 @@
     "dotenv": "8.2.0",
     "express": "4.17.1",
     "express-bearer-token": "2.4.0",
-    "firebase-admin": "8.7.0",
+    "firebase-admin": "^8.7.0",
     "module-alias": "2.2.2",
     "moment": "2.24.0",
     "pg": "7.12.1",

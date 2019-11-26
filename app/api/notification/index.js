@@ -3,6 +3,7 @@ const StatusUtils = require("@app/utils/status");
 const uuid = require("uuid/v4");
 const moment = require("moment");
 const DatabaseAPI = require("@app/api/database");
+const UserAPI = require("@app/api/user")
 
 class NotificationAPI{
 
@@ -23,16 +24,17 @@ class NotificationAPI{
     const smtpPort = (notification.smtp)? notification.smtp.port : null
     const smtpUsername = (notification.smtp)? notification.smtp.username : null
     const smtpPassword = (notification.smtp)? notification.smtp.password : null
+    const extraData = (notification.extraData)? notification.extraData : null
     
     const notificationId = await DatabaseAPI.query(async (client) => {
       const result = await client.query(`INSERT INTO notifications 
       ("id", "creatorProvider", "creatorId", "recipientType", "recipientId", "smsProvider", "smsApiKey", "smsSenderId", 
       "sentTime", "channel", "content", "title", "status", "createdAt", "smsApiSecret", "smtpHost", "smtpPort", "smtpUsername", "smtpPassword", 
-      "serverSentTime", "updatedAt", "deletedAt") 
-      VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NULL, NULL, NULL) RETURNING id`, 
+      "serverSentTime", "updatedAt", "deletedAt","extraData") 
+      VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NULL, NULL, NULL, $20) RETURNING id`, 
       [ uuid(), notification.creator.provider, notification.creator.id, notification.recipient.type, notification.recipient.id, 
       smsProvider, smsApiKey, smsSenderId, notification.sentTime, notification.channel, notification.content, 
-      notification.title, notification.status, moment().unix(), smsApiSecret, smtpHost, smtpPort, smtpUsername, smtpPassword ]);
+      notification.title, notification.status, moment().unix(), smsApiSecret, smtpHost, smtpPort, smtpUsername, smtpPassword, extraData ]);
       return result.rows[0].id
     });
     return notificationId
@@ -59,6 +61,28 @@ class NotificationAPI{
    * @param {int} limit 
    * @param {int} offset 
    */
+  static async listByCreatorId(creatorId, status=null, dateStart=null, dateEnd=null, orderBy="DESC", limit=10, offset=0){
+    return await DatabaseAPI.query(async (client) => {
+      const statusQuery = (status)? ` AND "status" = '${status}' ` : ""
+      const dateStartQuery = (dateStart)? ` AND "createdAt" >= ${dateStart} ` : ""
+      const dateEndQuery = (dateEnd)? ` AND "createdAt" <= ${dateEnd} ` : ""
+      const queryResponse = await client.query(`SELECT * FROM notifications 
+      WHERE "creatorId" = $1 ${statusQuery} ${dateStartQuery} ${dateEndQuery} 
+      ORDER BY "createdAt" ${orderBy} LIMIT ${limit} OFFSET ${offset}`, 
+      [ creatorId ]);
+      return Promise.resolve(NotificationAPI.parseQueryResponse(queryResponse));
+    })
+  }
+
+  /**
+   * 
+   * @param {string} status 
+   * @param {bigint} dateStart 
+   * @param {bigint} dateEnd 
+   * @param {string} orderBy 
+   * @param {int} limit 
+   * @param {int} offset 
+   */
   static async list(status=null, dateStart=null, dateEnd=null, orderBy="ASC", limit=10, offset=0){
     return await DatabaseAPI.query(async (client) => {
       const statusQuery = (status)? ` "status" = '${status}' ` : " "
@@ -69,6 +93,18 @@ class NotificationAPI{
       ORDER BY "createdAt" ${orderBy} LIMIT ${limit} OFFSET ${offset}`, 
       []);
       return Promise.resolve(NotificationAPI.parseQueryResponse(queryResponse));
+    })
+  }
+  
+  /**
+   * 
+   * @param {string} notificationId 
+   */
+  static async updateStatusNotificationById(notificationId, status){
+    return await DatabaseAPI.query(async (client) => {
+      return await client.query(`UPDATE notifications 
+      SET "status" = '${status}' 
+      WHERE "id" = $1`, [ notificationId ]);
     })
   }
 
@@ -85,12 +121,24 @@ class NotificationAPI{
     })
   }
 
-  static async updateStatusToSendingById(notificationId){
-    return await DatabaseAPI.query(async (client) => {
-      return await client.query(`UPDATE notifications 
-      SET "status" = '${StatusUtils.SENDING}' 
-      WHERE "status" = '${StatusUtils.QUEUEING}' AND "id" = $1`, [ notificationId ]);
-    })
+  /**
+   * 
+   * @param {Notification} notification 
+   */
+  static async pushNotification(notification){
+    try{
+      const extraData = (notification.extraData)? JSON.parse(notification.extraData): null
+      const channelId = (extraData.channel)? extraData.channel.id : null
+      const user = UserAPI.getDetailById(notification.receiver.id)
+  
+      message = {
+        token: user.tokenInformation.messagingToken,
+        android: { notification: { channelId }, priority: "high" },
+        data: extraData,
+        notification: { title: notification.title, body: notification.content }
+      }
+      return admin.messaging().send(message);
+    }catch(err){}
   }
 
 }
