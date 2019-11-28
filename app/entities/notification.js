@@ -16,6 +16,7 @@ class Notification{
 // _status: string
 // _sms: Sms
 // _smtp: Smtp
+// extraData: object
 // serverSentTime: bigint
 // createdAt: bigint
 // updatedAt: bigint
@@ -33,8 +34,9 @@ class Notification{
    * @param {Sms} sms 
    * @param {Smtp} smtp 
    * @param {bigint} serverSentTime 
+   * @param {object} extraData
    */
-  constructor(creator, recipient, sentTime, channel, content, status, title=null, sms=null, smtp=null, serverSentTime=null){
+  constructor(creator, recipient, sentTime, channel, content, status, title=null, sms=null, smtp=null, serverSentTime=null, extraData=null){
     this.creator = creator;
     this.recipient = recipient;
     this.sentTime = sentTime;
@@ -45,6 +47,7 @@ class Notification{
     this.sms = sms
     this.smtp = smtp
     this.serverSentTime = serverSentTime;
+    this.extraData = extraData;
   }
 
   get creator() { return this._creator.data }
@@ -68,6 +71,7 @@ class Notification{
   get channel() { return this._channel }
   set channel(value) { 
     if(!value) throw new CustomError("null-value", "channel cannot be empty")
+    if(value !== "sms" && value !== "pushNotification" && value !== "email" && value !== "mono") throw new CustomError("null-value","channel must be sms, mono, email, or pushNotification")
     this._channel = value
   }
 
@@ -103,7 +107,7 @@ class Notification{
     const recipient = new Recipient(row.recipientId, row.recipientType)
     const sms = (row.provider && row.apiKey && row.apiSecret && row.senderId)? new Sms(row.provider, row.apiKey, row.apiSecret, row.senderId): null
     const smtp = (row.smtpHost && row.smtpPorn && row.smtpUsername && row.smtpPassword)? new Smtp(row.smtpHost, row.smtpPorn, row.smtpUsername, row.smtpPassword): null
-    const notification = new Notification(creator, recipient, row.sentTime, row.channel, row.content, row.status, row.title, sms, smtp, row.serverSentTime)
+    const notification = new Notification(creator, recipient, row.sentTime, row.channel, row.content, row.status, row.title, sms, smtp, row.serverSentTime, row.extraData)
     notification.id = row.id
     notification.createdAt = row.createdAt
     notification.updatedAt = row.updatedAt

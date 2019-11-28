@@ -4,6 +4,7 @@ const uuid = require("uuid/v4");
 const moment = require("moment");
 const DatabaseAPI = require("@app/api/database");
 const UserAPI = require("@app/api/user")
+const admin = require("firebase-admin");
 
 class NotificationAPI{
 
@@ -127,18 +128,21 @@ class NotificationAPI{
    */
   static async pushNotification(notification){
     try{
-      const extraData = (notification.extraData)? JSON.parse(notification.extraData): null
-      const channelId = (extraData.channel)? extraData.channel.id : null
-      const user = UserAPI.getDetailById(notification.receiver.id)
-  
-      message = {
+      const extraData = (notification.extraData)? JSON.parse(notification.extraData): {}
+      const channelId = (extraData && extraData.channelId)? extraData.channelId : null
+      const user = await UserAPI.getDetailById(notification.recipient.id)
+      // console.log(extraData)
+      const message = {
         token: user.tokenInformation.messagingToken,
         android: { notification: { channelId }, priority: "high" },
         data: extraData,
         notification: { title: notification.title, body: notification.content }
       }
+      // console.log(message)
       return admin.messaging().send(message);
-    }catch(err){}
+    }catch(err){
+      throw err
+    }
   }
 
 }

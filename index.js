@@ -22,8 +22,10 @@ async function receive(){
     ch.consume("mono.queue", (msg) => {
       // do send notification to mono
       const notification = JSON.parse(msg.content)
-      console.log("RECEIVE: ", notification)
+      // console.log("RECEIVE: ", notification)
       NotificationAPI.pushNotification(notification)
+    }, {
+      noAck: true
     })
 
   }catch(err){

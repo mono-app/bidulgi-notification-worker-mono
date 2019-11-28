@@ -16,6 +16,7 @@
     "express": "4.17.1",
     "express-bearer-token": "2.4.0",
     "firebase-admin": "^8.7.0",
+    "libphonenumber-js": "^1.7.29",
     "module-alias": "2.2.2",
     "moment": "2.24.0",
     "pg": "7.12.1",
