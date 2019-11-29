@@ -102,10 +102,11 @@ class NotificationAPI{
    * @param {string} notificationId 
    */
   static async updateStatusNotificationById(notificationId, status){
+    const serverSentTime = (status===StatusUtils.SENT)? moment().unix()  : null
     return await DatabaseAPI.query(async (client) => {
       return await client.query(`UPDATE notifications 
-      SET "status" = '${status}' 
-      WHERE "id" = $1`, [ notificationId ]);
+      SET "status" = '${status}', "serverSentTime" = $1 
+      WHERE "id" = $2`, [ serverSentTime, notificationId ]);
     })
   }
 
@@ -139,8 +140,10 @@ class NotificationAPI{
         notification: { title: notification.title, body: notification.content }
       }
       // console.log(message)
-      return admin.messaging().send(message);
+      await admin.messaging().send(message)
+      NotificationAPI.updateStatusNotificationById(notification.id, StatusUtils.SENT)
     }catch(err){
+      NotificationAPI.updateStatusNotificationById(notification.id, StatusUtils.FAILED)
       throw err
     }
   }
