@@ -37,17 +37,17 @@ class Notification{
    * @param {object} extraData
    */
   constructor(creator, recipient, sentTime, channel, content, status, title=null, sms=null, smtp=null, serverSentTime=null, extraData=null){
+    this.title = title;
+    this.sms = sms
+    this.smtp = smtp
+    this.serverSentTime = serverSentTime;
+    this.extraData = extraData;
     this.creator = creator;
     this.recipient = recipient;
     this.sentTime = sentTime;
     this.channel = channel;
     this.content = content;
     this.status = status;
-    this.title = title;
-    this.sms = sms
-    this.smtp = smtp
-    this.serverSentTime = serverSentTime;
-    this.extraData = extraData;
   }
 
   get creator() { return this._creator.data }
@@ -72,12 +72,14 @@ class Notification{
   set channel(value) { 
     if(!value) throw new CustomError("null-value", "channel cannot be empty")
     if(value !== "sms" && value !== "pushNotification" && value !== "email" && value !== "mono") throw new CustomError("null-value","channel must be sms, mono, email, or pushNotification")
+    if(value==="sms" && !this.sms) throw new CustomError("null-value","smsApiKey, smsApiSecret must be filled if the channel is sms")
+    if(value==="email" && !this.smtp) throw new CustomError("null-value","smtpHost, smtpPort, smtpUsername,smtpPassword must be filled if the channel is email")
     this._channel = value
   }
 
   get content() { return this._content }
   set content(value) { 
-    if(!value) throw new CustomError("null-value", "content cannot be empty")
+    if(!value) throw new CustomError("null-value", "content cannot be empty") 
     this._content = value
   }
 
@@ -90,13 +92,13 @@ class Notification{
     this._status = value
   }
 
-  get sms() { return this._sms }
+  get sms() { return (this._sms)? this._sms.data: null }
   set sms(value) {
     if(value) if(!(value instanceof Sms)) throw new CustomError("notification/wrong-type", "sms must be Sms entity")
     this._sms = value
   }
 
-  get smtp() { return this._smtp }
+  get smtp() { return (this._smtp)? this._smtp.data : null }
   set smtp(value) {
     if(value) if(!(value instanceof Smtp)) throw new CustomError("notification/wrong-type", "smtp must be Smtp entity")
     this._smtp = value
@@ -105,8 +107,9 @@ class Notification{
   static fromDatabase(row){
     const creator = new Creator(row.creatorId, row.creatorProvider)
     const recipient = new Recipient(row.recipientId, row.recipientType)
-    const sms = (row.provider && row.apiKey && row.apiSecret && row.senderId)? new Sms(row.provider, row.apiKey, row.apiSecret, row.senderId): null
+    const sms = (row.smsProvider && row.smsApiKey && row.smsApiSecret && row.smsSenderId)? new Sms(row.smsProvider, row.smsApiKey, row.smsApiSecret, row.smsSenderId): null
     const smtp = (row.smtpHost && row.smtpPorn && row.smtpUsername && row.smtpPassword)? new Smtp(row.smtpHost, row.smtpPorn, row.smtpUsername, row.smtpPassword): null
+   
     const notification = new Notification(creator, recipient, row.sentTime, row.channel, row.content, row.status, row.title, sms, smtp, row.serverSentTime, row.extraData)
     notification.id = row.id
     notification.createdAt = row.createdAt
