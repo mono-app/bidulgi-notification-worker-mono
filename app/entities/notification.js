@@ -108,7 +108,7 @@ class Notification{
     const creator = new Creator(row.creatorId, row.creatorProvider)
     const recipient = new Recipient(row.recipientId, row.recipientType)
     const sms = (row.smsProvider && row.smsApiKey && row.smsApiSecret && row.smsSenderId)? new Sms(row.smsProvider, row.smsApiKey, row.smsApiSecret, row.smsSenderId): null
-    const smtp = (row.smtpHost && row.smtpPorn && row.smtpUsername && row.smtpPassword)? new Smtp(row.smtpHost, row.smtpPorn, row.smtpUsername, row.smtpPassword): null
+    const smtp = (row.smtpHost && row.smtpPort && row.smtpUsername && row.smtpPassword)? new Smtp(row.smtpHost, row.smtpPort, row.smtpUsername, row.smtpPassword): null
    
     const notification = new Notification(creator, recipient, row.sentTime, row.channel, row.content, row.status, row.title, sms, smtp, row.serverSentTime, row.extraData)
     notification.id = row.id
