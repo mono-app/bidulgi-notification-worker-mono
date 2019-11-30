@@ -23,8 +23,20 @@ class Recipient{
   }
   set id(value) {
     if(!value) throw new CustomError("null-value","recipient id cannot be empty")
-    if(this.type==="phoneNumber") this._id = new PhoneNumber(value, true)
-    else if(this.type==="email") this._id = new Email(value)
+    if(this.type==="phoneNumber") {
+      try{
+        this._id = new PhoneNumber(value, true)
+      }catch(err) {
+        throw new CustomError("phone-number/not-valid", "Recipient phone number not valid")
+      }
+    }
+    else if(this.type==="email") {
+      try{
+        this._id = new Email(value)
+      }catch(err) {
+        throw new CustomError("email/not-valid", "Recipient email not valid")
+      }
+    }
     else this._id = value
   }
 
