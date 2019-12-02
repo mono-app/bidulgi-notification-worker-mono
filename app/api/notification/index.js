@@ -131,15 +131,15 @@ class NotificationAPI{
     try{
       const extraData = (notification.extraData)? JSON.parse(notification.extraData): {}
       const channelId = (extraData && extraData.channelId)? extraData.channelId : null
-      const user = await UserAPI.getDetailById(notification.recipient.id)
-      // console.log(extraData)
+      const messagingToken = UserAPI.getMessagingTokenById(notification.receiver.id)
+
       const message = {
-        token: user.tokenInformation.messagingToken,
+        token: messagingToken,
         android: { notification: { channelId }, priority: "high" },
         data: extraData,
         notification: { title: notification.title, body: notification.content }
       }
-      // console.log(message)
+
       await admin.messaging().send(message)
       NotificationAPI.updateStatusNotificationById(notification.id, StatusUtils.SENT)
     }catch(err){

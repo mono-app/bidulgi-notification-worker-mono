@@ -1,12 +1,12 @@
 const admin = require("firebase-admin");
-const User = require("@app/entities/user")
 
 class UserAPI{
-  static async getDetailById(userId){
+
+  static async getMessagingTokenById(userId){
     const db = admin.firestore();
     const documentSnapshot = await db.collection("users").doc(userId).get()
-    return User.fromSnapshot(documentSnapshot)
-  }
+    return documentSnapshot.tokenInformation.messagingToken
+  } 
 }
 
 module.exports = UserAPI;

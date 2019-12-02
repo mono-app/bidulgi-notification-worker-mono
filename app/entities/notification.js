@@ -50,13 +50,13 @@ class Notification{
     this.status = status;
   }
 
-  get creator() { return this._creator.data }
+  get creator() { return this._creator }
   set creator(value) {
     if(!(value instanceof Creator)) throw new CustomError("notification/wrong-type", "creator must be Creator entity")
     this._creator = value
   }
 
-  get recipient() { return this._recipient.data }
+  get recipient() { return this._recipient }
   set recipient(value) {
     if(!(value instanceof Recipient)) throw new CustomError("notification/wrong-type", "recipient must be Recipient entity")
     this._recipient = value
@@ -92,13 +92,13 @@ class Notification{
     this._status = value
   }
 
-  get sms() { return (this._sms)? this._sms.data: null }
+  get sms() { return this._sms }
   set sms(value) {
     if(value) if(!(value instanceof Sms)) throw new CustomError("notification/wrong-type", "sms must be Sms entity")
     this._sms = value
   }
 
-  get smtp() { return (this._smtp)? this._smtp.data : null }
+  get smtp() { return this._smtp }
   set smtp(value) {
     if(value) if(!(value instanceof Smtp)) throw new CustomError("notification/wrong-type", "smtp must be Smtp entity")
     this._smtp = value
@@ -122,7 +122,8 @@ class Notification{
     const transformedData = {}
     Object.keys(this).map((prop) => {
       const newProp = (prop.indexOf("_") === 0)? prop.substring(1): prop;
-      transformedData[newProp] = this[newProp];
+      if(typeof(this[newProp]) === "object" && this[newProp].data) transformedData[newProp] = this[newProp].data;
+      else transformedData[newProp] = this[newProp];
     })
     return transformedData;
   }
